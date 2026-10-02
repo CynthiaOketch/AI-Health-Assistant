@@ -79,7 +79,7 @@ if st.button("Predict Risk"):
         pdf.ln(5)
         pdf.cell(200, 10, txt=f"Risk Level: {label}", ln=True)
         pdf.cell(200, 10, txt=f"Probability: {proba:.2%}", ln=True)
-        return pdf.output(dest="S").encode("latin1")
+        return bytes(pdf.output())
 
     pdf_bytes = generate_pdf()
     b64_pdf = base64.b64encode(pdf_bytes).decode("utf-8")
