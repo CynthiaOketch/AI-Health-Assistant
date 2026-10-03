@@ -1,3 +1,5 @@
+import os
+
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -29,6 +31,7 @@ y_pred = model.predict(X_test_scaled)
 print("Accuracy:", accuracy_score(y_test, y_pred))
 print(classification_report(y_test, y_pred))
 
+os.makedirs("models", exist_ok=True)
 joblib.dump(model, "models/best_model.pkl")
 joblib.dump(scaler, "models/preprocessor.pkl")
 print("Saved models/best_model.pkl and models/preprocessor.pkl")
