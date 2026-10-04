@@ -1,43 +1,66 @@
-import streamlit as st
-import pandas as pd
-import shap
+import base64
+
 import joblib
 import matplotlib.pyplot as plt
+import pandas as pd
+import shap
+import streamlit as st
 from fpdf import FPDF
-import base64
-import numpy as np
 
 model = joblib.load("models/best_model.pkl")
 preprocessor = joblib.load("models/preprocessor.pkl")
 explainer = shap.TreeExplainer(model)
 
-FEATURES = ["Pregnancies", "Glucose", "BloodPressure", "SkinThickness",
-            "Insulin", "BMI", "DiabetesPedigreeFunction", "Age"]
+FEATURES = [
+    "Pregnancies",
+    "Glucose",
+    "BloodPressure",
+    "SkinThickness",
+    "Insulin",
+    "BMI",
+    "DiabetesPedigreeFunction",
+    "Age",
+]
+PREGNANCIES_SLIDER_CONFIG = (0, 17, 1)
+GLUCOSE_SLIDER_CONFIG = (0, 200, 100)
+BLOOD_PRESSURE_SLIDER_CONFIG = (0, 122, 70)
+SKIN_THICKNESS_SLIDER_CONFIG = (0, 99, 20)
+INSULIN_SLIDER_CONFIG = (0, 846, 79)
+BMI_SLIDER_CONFIG = (0.0, 67.1, 25.0)
+DIABETES_PEDIGREE_SLIDER_CONFIG = (0.078, 2.42, 0.47)
+AGE_SLIDER_CONFIG = (21, 81, 30)
 
 st.set_page_config(page_title="Health Risk Prediction", layout="centered")
 st.title("AI Health Risk Prediction Assistant")
-st.markdown("Enter patient information to predict diabetes risk and view explainability insights.")
+st.markdown(
+    "Enter patient information to predict diabetes risk and view "
+    "explainability insights."
+)
 
 st.sidebar.header("Patient Information")
-pregnancies = st.sidebar.slider("Pregnancies", 0, 17, 1)
-glucose = st.sidebar.slider("Glucose Level", 0, 200, 100)
-bp = st.sidebar.slider("Blood Pressure (mm Hg)", 0, 122, 70)
-skin_thickness = st.sidebar.slider("Skin Thickness (mm)", 0, 99, 20)
-insulin = st.sidebar.slider("Insulin Level (mu U/ml)", 0, 846, 79)
-bmi = st.sidebar.slider("BMI", 0.0, 67.1, 25.0)
-dpf = st.sidebar.slider("Diabetes Pedigree Function", 0.078, 2.42, 0.47)
-age = st.sidebar.slider("Age", 21, 81, 30)
+pregnancies = st.sidebar.slider("Pregnancies", *PREGNANCIES_SLIDER_CONFIG)
+glucose = st.sidebar.slider("Glucose Level", *GLUCOSE_SLIDER_CONFIG)
+bp = st.sidebar.slider("Blood Pressure (mm Hg)", *BLOOD_PRESSURE_SLIDER_CONFIG)
+skin_thickness = st.sidebar.slider("Skin Thickness (mm)", *SKIN_THICKNESS_SLIDER_CONFIG)
+insulin = st.sidebar.slider("Insulin Level (mu U/ml)", *INSULIN_SLIDER_CONFIG)
+bmi = st.sidebar.slider("BMI", *BMI_SLIDER_CONFIG)
+dpf = st.sidebar.slider("Diabetes Pedigree Function", *DIABETES_PEDIGREE_SLIDER_CONFIG)
+age = st.sidebar.slider("Age", *AGE_SLIDER_CONFIG)
 
-input_data = pd.DataFrame([{
-    "Pregnancies": pregnancies,
-    "Glucose": glucose,
-    "BloodPressure": bp,
-    "SkinThickness": skin_thickness,
-    "Insulin": insulin,
-    "BMI": bmi,
-    "DiabetesPedigreeFunction": dpf,
-    "Age": age
-}])
+input_data = pd.DataFrame(
+    [
+        {
+            "Pregnancies": pregnancies,
+            "Glucose": glucose,
+            "BloodPressure": bp,
+            "SkinThickness": skin_thickness,
+            "Insulin": insulin,
+            "BMI": bmi,
+            "DiabetesPedigreeFunction": dpf,
+            "Age": age,
+        }
+    ]
+)
 
 X_input = preprocessor.transform(input_data)
 
@@ -61,14 +84,15 @@ if st.button("Predict Risk"):
             values=shap_values[0],
             base_values=explainer.expected_value,
             data=X_input[0],
-            feature_names=FEATURES
+            feature_names=FEATURES,
         ),
         max_display=8,
-        show=False
+        show=False,
     )
     st.pyplot(fig)
 
-    def generate_pdf():
+    def generate_pdf() -> bytes:
+        """Build the downloadable patient risk report as PDF bytes."""
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Arial", size=12)
@@ -83,5 +107,8 @@ if st.button("Predict Risk"):
 
     pdf_bytes = generate_pdf()
     b64_pdf = base64.b64encode(pdf_bytes).decode("utf-8")
-    href = f'<a href="data:application/pdf;base64,{b64_pdf}" download="prediction_report.pdf">Download Report as PDF</a>'
+    href = (
+        f'<a href="data:application/pdf;base64,{b64_pdf}" '
+        'download="prediction_report.pdf">Download Report as PDF</a>'
+    )
     st.markdown(href, unsafe_allow_html=True)

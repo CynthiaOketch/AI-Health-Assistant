@@ -18,10 +18,10 @@ env/
 *.onnx
 
 # Data files
-*.csv
+data/*.csv
+!data/diabetes.csv
 *.tsv
 *.xlsx
-*.json
 *.xml
 
 # PDF Reports
